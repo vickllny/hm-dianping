@@ -39,18 +39,22 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     public Result findById(final Long id) {
         final String key = CACHE_SHOP_KEY + id;
         String jsonString = stringRedisTemplate.opsForValue().get(key);
-        Shop shop = null;
         if(StrUtil.isNotBlank(jsonString)){
-            shop = JSONUtil.toBean(jsonString, Shop.class);
+            return Result.ok(JSONUtil.toBean(jsonString, Shop.class));
+        }
+        if(jsonString != null){
+            return Result.fail("店铺信息不存在");
+        }
+        Shop shop;
+        //从数据库查询
+        if((shop = getById(id)) == null){
+            jsonString = "";
+            stringRedisTemplate.opsForValue().set(key, jsonString, RedisConstants.CACHE_SHOP_NULL_TTL, TimeUnit.MINUTES);
         }else {
-            //从数据库查询
-            if((shop = getById(id)) == null){
-                return Result.fail("店铺不存在");
-            }
             jsonString = JSONUtil.toJsonStr(shop);
             stringRedisTemplate.opsForValue().set(key, jsonString, CACHE_SHOP_TTL, TimeUnit.MINUTES);
         }
-        return Result.ok(shop);
+        return shop == null ? Result.fail("店铺信息不存在") : Result.ok(shop);
     }
 
     @Override
