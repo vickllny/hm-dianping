@@ -52,4 +52,17 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         }
         return Result.ok(shop);
     }
+
+    @Override
+    @Transactional
+    public Result update(final Shop shop) {
+        final Long id = shop.getId();
+        if(id == null){
+            return Result.fail("店铺id不能为空");
+        }
+        this.updateById(shop);
+        final String key = CACHE_SHOP_KEY + id;
+        stringRedisTemplate.delete(key);
+        return Result.ok();
+    }
 }

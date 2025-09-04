@@ -1277,6 +1277,17 @@ CREATE TABLE `tb_voucher_order`  (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
 
+DROP TABLE IF EXISTS `tb_seckill_voucher`;
+CREATE TABLE `tb_seckill_voucher` (
+  `voucher_id` bigint(20) NOT NULL,
+  `stock` int(11) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `begin_time` datetime DEFAULT NULL,
+  `end_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`voucher_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ----------------------------
 -- Records of tb_voucher_order
 -- ----------------------------
