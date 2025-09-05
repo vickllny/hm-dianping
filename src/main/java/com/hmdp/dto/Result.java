@@ -27,4 +27,8 @@ public class Result {
     public static Result fail(String errorMsg){
         return new Result(false, errorMsg, null, null);
     }
+
+    public static Result fail(){
+        return new Result(false, null, null, null);
+    }
 }
