@@ -10,6 +10,7 @@ import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.Sleeper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @author 虎哥
  * @since 2021-12-22
  */
+@Slf4j
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
 
@@ -61,6 +63,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         if(setIfAbsent != null && setIfAbsent){
             try {
                 final Shop shop;
+                log.debug("线程[{}]获取锁成功，开始查询数据库", Thread.currentThread().getId());
                 if((shop = getById(id)) == null){
                     jsonString = "";
                     stringRedisTemplate.opsForValue().set(cacheKey, jsonString, RedisConstants.CACHE_SHOP_NULL_TTL, TimeUnit.MINUTES);
