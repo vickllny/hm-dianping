@@ -17,6 +17,8 @@ public interface IShopService extends IService<Shop> {
 
     Result findById(Long id);
 
+    Shop findByIdWithLogicalExpire(Long id);
+
     Shop findByIdWithMutexLock(Long id);
 
     Result update(Shop shop);
