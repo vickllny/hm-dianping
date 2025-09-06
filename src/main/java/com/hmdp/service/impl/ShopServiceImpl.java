@@ -9,6 +9,7 @@ import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
+import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RedisData;
 import com.hmdp.utils.Sleeper;
@@ -37,8 +38,12 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
+
+    @Autowired
+    private CacheClient cacheClient;
 
     @Value("${shop.cache.mutex.retry.count:5}")
     private int mutexRetryCount;
@@ -48,44 +53,21 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Override
     public Result findById(final Long id) {
-        Shop shop;
-        return (shop = findByIdWithLogicalExpire(id)) == null ? Result.fail("店铺信息不存在") : Result.ok(shop);
+//        final Shop shop = cacheClient.queryWithPassThrough(() -> RedisConstants.CACHE_SHOP_KEY + id, Shop.class, () -> this.getById(id), RedisConstants.CACHE_SHOP_TTL, TimeUnit.SECONDS);
+        final Shop shop = findByIdWithLogicalExpire(id);
+        return shop == null ? Result.fail("店铺信息不存在") : Result.ok(shop);
     }
 
     @Override
     public Shop findByIdWithLogicalExpire(final Long id) {
-        final String cacheKey = RedisConstants.CACHE_SHOP_KEY + id;
-        String jsonString = stringRedisTemplate.opsForValue().get(cacheKey);
-        if(StrUtil.isBlank(jsonString)){
-            return null;
-        }
-        //1.反序列化为对象
-        final RedisData redisData = JSONUtil.toBean(jsonString, RedisData.class);
-        //2.判断是否过期
-        final LocalDateTime expireTime = redisData.getExpireTime();
-        final JSONObject jsonObject = (JSONObject)redisData.getData();
-        final Shop shop = JSONUtil.toBean(jsonObject, Shop.class);
-        if(LocalDateTime.now().isBefore(expireTime)){
-            //3.1 如果未过期，则返回
-            return shop;
-        }
-        //4 如果已过期，则缓存重建
-        final String lockKey = RedisConstants.LOCK_SHOP_KEY + id;
-        final String lockValue = UUID.randomUUID().toString();
-        //5 获取互斥锁
-        final Boolean setIfAbsent = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, lockValue, RedisConstants.CACHE_LOCK_SHOP_TTL, TimeUnit.SECONDS);
-        if(setIfAbsent != null && setIfAbsent){
-            //5.1 获取互斥锁成功，异步开启线程执行缓存重建
-            threadPoolExecutor.execute(() -> {
-                try {
-                    saveShop2Redis(id, 30, TimeUnit.SECONDS);
-                }finally {
-                    stringRedisTemplate.delete(lockKey);
-                }
-            });
-        }
-        //6 直接返回null
-        return shop;
+        return cacheClient.queryWithLogicalExpire(
+                () -> RedisConstants.CACHE_SHOP_KEY + id,
+                () -> RedisConstants.LOCK_SHOP_KEY + id,
+                Shop.class,
+                () -> getById(id),
+                RedisConstants.CACHE_SHOP_TTL,
+                TimeUnit.SECONDS
+                );
     }
 
     public void saveShop2Redis(final Long id, final long time, final TimeUnit timeUnit){
