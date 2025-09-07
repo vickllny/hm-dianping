@@ -8,6 +8,8 @@ import com.hmdp.mapper.VoucherOrderMapper;
 import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.hmdp.utils.*;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -28,6 +30,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     @Autowired
     private RedisIdWorker redisIdWorker;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Override
     @Transactional
@@ -55,8 +60,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
         final Long userId = UserHolder.getUser().getId();
         final String lockKey = RedisConstants.LOCK_VOUCHER_ORDER_KEY + voucherId + ":" + userId;
-        final SimpleRedisLock lock = new SimpleRedisLock(lockKey, stringRedisTemplate);
-        if(!lock.tryLock(1200)){
+        final RLock lock = redissonClient.getLock(lockKey);
+        if(!lock.tryLock()){
             return Result.fail("系统繁忙，请重试!");
         }
         try {

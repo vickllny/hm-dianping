@@ -62,6 +62,13 @@
             <version>5.7.17</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.13.5</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
