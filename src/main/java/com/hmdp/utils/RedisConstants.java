@@ -20,6 +20,15 @@ public class RedisConstants {
 
     public static final String SECKILL_STOCK_KEY = "seckill:stock:";
 
+    public static final String CACHE_SECKILL_VOUCHER_KEY = "seckill:voucher:";
+    public static final long CACHE_SECKILL_VOUCHER_TTL = 30L;
+
     public static final String CACHE_SHOP_TYPE_LIST_KEY = "cache:shop-type";
+
     public static final long CACHE_SHOP_TYPE_TTL = 30L;
+
+    public static final String VOUCHER_ORDER_KEY_PREFIX = "voucher:order";
+
+    public static final String LOCK_VOUCHER_ORDER_KEY = "lock:voucher:order";
+    public static final long LOCK_VOUCHER_ORDER_TTL = 10L;
 }
