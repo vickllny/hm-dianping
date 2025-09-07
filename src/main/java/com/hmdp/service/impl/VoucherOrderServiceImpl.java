@@ -64,6 +64,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if(!lock.tryLock()){
             return Result.fail("系统繁忙，请重试!");
         }
+
         try {
             return ContextUtils.getBean(IVoucherOrderService.class).getResult(voucherId, now, userId);
         }finally {
