@@ -13,4 +13,6 @@ public interface IVoucherOrderService extends IService<VoucherOrder> {
 
     @Transactional
     Result getResult(Long voucherId, LocalDateTime now, Long userId);
+
+    void handlerVoucherOrder(VoucherOrder voucherOrder);
 }

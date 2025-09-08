@@ -18,6 +18,12 @@ public class ThreadConfig {
                 new LinkedBlockingQueue<>(2000), new NamedThreadFactory("async-task-"));
     }
 
+    @Bean
+    public ThreadPoolExecutor seckillThreadPoolExecutor(){
+        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), 200, 300, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(2000), new NamedThreadFactory("seckill-task-"));
+    }
+
 
     private static class NamedThreadFactory implements ThreadFactory {
         private final String namePrefix;

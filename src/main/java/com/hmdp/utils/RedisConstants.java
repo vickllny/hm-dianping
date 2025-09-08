@@ -30,5 +30,6 @@ public class RedisConstants {
     public static final String VOUCHER_ORDER_KEY_PREFIX = "voucher:order";
 
     public static final String LOCK_VOUCHER_ORDER_KEY = "lock:voucher:order";
-    public static final long LOCK_VOUCHER_ORDER_TTL = 10L;
+
+    public static final String SECKILL_ORDER_KEY = "seckill:order:";
 }
