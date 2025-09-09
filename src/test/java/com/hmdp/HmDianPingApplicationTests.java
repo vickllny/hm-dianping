@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,6 +58,14 @@ public class HmDianPingApplicationTests {
 
         final long end = System.currentTimeMillis();
         System.out.println("耗时: " + (end - beginTime) + "ms");
+    }
+
+    @Test
+    public void test3(){
+        final List<Shop> list = shopService.list();
+        for (final Shop shop : list) {
+            cacheClient.setWithLogical(RedisConstants.CACHE_SHOP_KEY + shop.getId(), shop, 30, TimeUnit.MINUTES);
+        }
     }
 
 }
