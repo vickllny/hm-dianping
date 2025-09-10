@@ -4,6 +4,8 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
@@ -13,14 +15,20 @@ import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RedisData;
 import com.hmdp.utils.Sleeper;
+import com.hmdp.utils.SystemConstants;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Service
-public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
+public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService, CommandLineRunner {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -139,4 +147,33 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         stringRedisTemplate.delete(key);
         return Result.ok();
     }
+
+    @Override
+    public Result queryShopByType(Integer typeId, Integer current, Double x, Double y) {
+        if(typeId == null){
+            
+        }
+        // 根据类型分页查询
+        // Page<Shop> page = shopService.query()
+        //         .eq("type_id", typeId)
+        //         .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
+
+        return null;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        List<Shop> list = this.list();
+        for (Shop shop : list) {
+            final String key = RedisConstants.SHOP_GEO_KEY + shop.getTypeId();
+            Point point = new Point(shop.getX(), shop.getY());
+            String shopId = shop.getId().toString();
+            stringRedisTemplate.opsForGeo().add(key, point, shopId);
+            stringRedisTemplate.opsForGeo().add(RedisConstants.SHOP_GEO_ALL_KEY, point, shopId);
+        }
+        
+    }
+
+    
+    
 }

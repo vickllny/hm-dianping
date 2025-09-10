@@ -37,4 +37,6 @@ public class RedisConstants {
 
     public static final String FOLLOW_USER_KEY = "follow:user:";
     public static final String FOLLOW_FEED_KEY = "follow:feed:";
+    public static final String SHOP_GEO_ALL_KEY = "shop:geo:all:";
+    public static final String SHOP_GEO_KEY = "shop:geo:";
 }
