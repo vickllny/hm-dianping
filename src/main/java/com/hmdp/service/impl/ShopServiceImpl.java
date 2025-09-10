@@ -1,5 +1,6 @@
 package com.hmdp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -21,16 +22,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
+import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.domain.geo.GeoReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -150,15 +157,48 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Override
     public Result queryShopByType(Integer typeId, Integer current, Double x, Double y) {
-        if(typeId == null){
-            
+        if(x == null || y == null){
+            //非地理查询
+             Page<Shop> page = lambdaQuery()
+                     .eq(Shop::getTypeId, typeId)
+                     .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
+             return Result.ok(page.getRecords());
         }
-        // 根据类型分页查询
-        // Page<Shop> page = shopService.query()
-        //         .eq("type_id", typeId)
-        //         .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
+        final int from = (current - 1) * SystemConstants.DEFAULT_PAGE_SIZE;
+        final int end = current * SystemConstants.DEFAULT_PAGE_SIZE;
+        final String key;
+        if(typeId == null){
+            key = RedisConstants.SHOP_GEO_ALL_KEY;
+        }else {
+            key = RedisConstants.SHOP_GEO_KEY + typeId;
+        }
 
-        return null;
+        final GeoResults<GeoLocation<String>> geoResults = stringRedisTemplate.opsForGeo().search(
+                key,
+                GeoReference.fromCoordinate(x, y),
+                new Distance(5000),
+                RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().limit(end)
+        );
+        if(geoResults == null){
+            return Result.ok(Collections.emptyList());
+        }
+        final List<GeoResult<GeoLocation<String>>> content = from == 0 ? geoResults.getContent() : geoResults.getContent().stream().skip(from).collect(Collectors.toList());
+        if(CollUtil.isEmpty(content)){
+            return Result.ok(Collections.emptyList());
+        }
+        final Map<String, Double> tempMap = new HashMap<>();
+        for (final GeoResult<GeoLocation<String>> result : content) {
+            final GeoLocation<String> geoLocation = result.getContent();
+            final Distance distance = result.getDistance();
+            tempMap.put(geoLocation.getName(), distance.getValue());
+        }
+        final List<Shop> shops = listByIds(tempMap.keySet().stream().map(Long::valueOf).collect(Collectors.toList()));
+        //按照顺序排序
+        shops.sort(Comparator.comparingDouble(o -> tempMap.get(o.getId().toString())));
+        for (final Shop shop : shops) {
+            shop.setDistance(tempMap.get(shop.getId().toString()));
+        }
+        return Result.ok(shops);
     }
 
     @Override
@@ -171,9 +211,6 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             stringRedisTemplate.opsForGeo().add(key, point, shopId);
             stringRedisTemplate.opsForGeo().add(RedisConstants.SHOP_GEO_ALL_KEY, point, shopId);
         }
-        
     }
 
-    
-    
 }
