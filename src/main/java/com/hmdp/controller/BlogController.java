@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
-import com.hmdp.entity.User;
 import com.hmdp.service.IBlogService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.SystemConstants;
@@ -29,19 +28,14 @@ public class BlogController {
 
     @Resource
     private IBlogService blogService;
+
     @Resource
     private IUserService userService;
 
 
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-        // 获取登录用户
-        UserDTO user = UserHolder.getUser();
-        blog.setUserId(user.getId());
-        // 保存探店博文
-        blogService.save(blog);
-        // 返回id
-        return Result.ok(blog.getId());
+        return blogService.saveBlog(blog);
     }
 
     @PutMapping("/like/{id}")
@@ -82,5 +76,16 @@ public class BlogController {
         final Page<Blog> blogPage = blogService.query().eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
 
         return Result.ok(blogPage.getRecords());
+    }
+
+    
+    // max 当前时间戳 | 上一次查询的最小值
+    // min: 0
+    // offset: 0 | 在上一次的结果中与最小值一样的元素的个数
+    // count: 3
+    @GetMapping(value = "/of/follow")
+    public Result queryFollowBlogByUserId(@RequestParam("lastId") final Long lastId,
+                                        @RequestParam(value = "offset", defaultValue = "0") final Integer offset){
+        return blogService.queryBlogOfFollow(lastId, offset);
     }
 }

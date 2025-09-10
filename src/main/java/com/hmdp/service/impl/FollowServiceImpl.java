@@ -3,7 +3,10 @@ package com.hmdp.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.BooleanUtil;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -86,4 +89,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         final List<User> users = iUserService.listByIds(intersect.stream().map(Long::valueOf).collect(Collectors.toList()));
         return Result.ok(users.stream().map(user -> BeanUtil.copyProperties(user, UserDTO.class)).collect(Collectors.toList()));
     }
+
+    @Override
+    public List<Follow> findByFollowUserId(Long id) {
+     LambdaQueryWrapper<Follow> wrapper = Wrappers.lambdaQuery(Follow.class).eq(Follow::getFollowUserId, id);
+        return list(wrapper);
+    }
+
+    
 }

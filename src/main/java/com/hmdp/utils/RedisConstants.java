@@ -36,4 +36,5 @@ public class RedisConstants {
     public static final String BLOG_LIKED_KEY = "blog:liked:";
 
     public static final String FOLLOW_USER_KEY = "follow:user:";
+    public static final String FOLLOW_FEED_KEY = "follow:feed:";
 }
