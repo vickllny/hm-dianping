@@ -120,13 +120,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
             tempMap.put(Long.valueOf(string), ++count);
         }
         final List<UserDTO> userList = iUserService.listByIds(tempMap.keySet())
-                .stream().map(user -> BeanUtil.copyProperties(user, UserDTO.class))
-                .collect(Collectors.toList());
-        userList.sort((o1, o2) -> {
-            final Integer i = tempMap.get(o1.getId());
-            final Integer j = tempMap.get(o2.getId());
-            return Integer.compare(i, j);
-        });
+                .stream().map(user -> BeanUtil.copyProperties(user, UserDTO.class)).sorted((o1, o2) -> {
+                    final Integer i = tempMap.get(o1.getId());
+                    final Integer j = tempMap.get(o2.getId());
+                    return Integer.compare(i, j);
+                }).collect(Collectors.toList());
         return Result.ok(userList);
     }
 

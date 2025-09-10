@@ -34,4 +34,6 @@ public class RedisConstants {
     public static final String SECKILL_ORDER_KEY = "seckill:order:";
 
     public static final String BLOG_LIKED_KEY = "blog:liked:";
+
+    public static final String FOLLOW_USER_KEY = "follow:user:";
 }
