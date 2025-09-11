@@ -91,4 +91,27 @@ public class UserController {
         final UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         return Result.ok(userDTO);
     }
+
+    @GetMapping("/sign")
+    public Result sign(){
+        return userService.sign();
+    }
+
+    /**
+     * 当前用户截至当前时间的连续签到天数
+     * @return
+     */
+    @GetMapping("/sign/continuous")
+    public Result signContinuous(){
+        return userService.signContinuous();
+    }
+
+    /**
+     * 当前用户当前月的签到天数
+     * @return
+     */
+    @GetMapping("/sign/count")
+    public Result signCount(){
+        return userService.signCount();
+    }
 }

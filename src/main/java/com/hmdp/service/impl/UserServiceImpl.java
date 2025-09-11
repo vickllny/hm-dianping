@@ -2,6 +2,7 @@ package com.hmdp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,7 +14,9 @@ import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RegexUtils;
+import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.hmdp.utils.SystemConstants.USER_NICK_NAME_PREFIX;
@@ -109,6 +116,79 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         final String tokenKey = RedisConstants.LOGIN_USER_KEY + token;
         stringRedisTemplate.delete(tokenKey);
         return Result.ok();
+    }
+
+    @Override
+    public Result sign() {
+        final UserDTO user = UserHolder.getUser();
+        if(user == null){
+            return Result.fail("用户信息不存在");
+        }
+        final LocalDate now = LocalDate.now();
+        final String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        final int day = now.getDayOfMonth();
+        final String key = RedisConstants.USER_SIGN_KEY + user.getId() + keySuffix;
+        stringRedisTemplate.opsForValue().setBit(key, day - 1, true);
+        return Result.ok();
+    }
+
+    @Override
+    public Result signContinuous() {
+        final UserDTO user = UserHolder.getUser();
+        if(user == null){
+            return Result.fail("用户信息不存在");
+        }
+        final LocalDate now = LocalDate.now();
+        final String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        final String key = RedisConstants.USER_SIGN_KEY + user.getId() + keySuffix;
+        final int day = now.getDayOfMonth();
+        final BitFieldSubCommands commands = BitFieldSubCommands.create()
+                .get(BitFieldSubCommands.BitFieldType.unsigned(day)).valueAt(0);
+        final List<Long> longList = stringRedisTemplate.opsForValue().bitField(key, commands);
+        if(CollUtil.isEmpty(longList)){
+            return Result.ok(0);
+        }
+        Long aLong = longList.get(0);
+        if(aLong == null || aLong == 0L){
+            return Result.ok(0);
+        }
+        int count = 0;
+        while ((aLong & 1) != 0) {
+            count++;
+            aLong >>>= 1;
+        }
+        return Result.ok(count);
+    }
+
+    @Override
+    public Result signCount() {
+
+        final UserDTO user = UserHolder.getUser();
+        if(user == null){
+            return Result.fail("用户信息不存在");
+        }
+        final LocalDate now = LocalDate.now();
+        final String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        final String key = RedisConstants.USER_SIGN_KEY + user.getId() + keySuffix;
+        final int day = now.getDayOfMonth();
+        final BitFieldSubCommands commands = BitFieldSubCommands.create()
+                .get(BitFieldSubCommands.BitFieldType.unsigned(day)).valueAt(0);
+        final List<Long> longList = stringRedisTemplate.opsForValue().bitField(key, commands);
+        if(CollUtil.isEmpty(longList)){
+            return Result.ok(0);
+        }
+        Long aLong = longList.get(0);
+        if(aLong == null || aLong == 0L){
+            return Result.ok(0);
+        }
+        int count = 0;
+        while (aLong != 0) {
+            if((aLong & 1) != 0){
+                count++;
+            }
+            aLong >>>= 1;
+        }
+        return Result.ok(count);
     }
 
     private User createUserWithPhone(String phone) {

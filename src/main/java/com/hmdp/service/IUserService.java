@@ -22,4 +22,10 @@ public interface IUserService extends IService<User> {
     Result sedCode(String phone);
 
     Result logout(final String token);
+
+    Result sign();
+
+    Result signContinuous();
+
+    Result signCount();
 }
