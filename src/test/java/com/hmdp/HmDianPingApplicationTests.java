@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
@@ -30,6 +31,9 @@ public class HmDianPingApplicationTests {
 
     @Resource
     private RedisIdWorker redisIdWorker;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
 
 //    @Test
@@ -66,6 +70,20 @@ public class HmDianPingApplicationTests {
         for (final Shop shop : list) {
             cacheClient.setWithLogical(RedisConstants.CACHE_SHOP_KEY + shop.getId(), shop, 30, TimeUnit.MINUTES);
         }
+    }
+
+    @Test
+    public void test4(){
+        String[] users = new String[1000];
+        for (int i = 0; i < 100_0000; i++) {
+            int j = i % 1000;
+            users[j] = "user_" + i;
+            if(j == 999){
+                stringRedisTemplate.opsForHyperLogLog().add("hl2", users);
+            }
+        }
+        final Long hl2 = stringRedisTemplate.opsForHyperLogLog().size("hl2");
+        System.out.println(hl2);
     }
 
 }
