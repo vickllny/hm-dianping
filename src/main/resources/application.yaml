@@ -17,12 +17,20 @@ spring:
         max-idle: 10
         min-idle: 1
         time-between-eviction-runs: 10s
-#    sentinel:
+#    sentinel: #哨兵模式
 #      master: mymaster #指定master名称
 #      nodes: # 指定redis-sentinel的集群信息
 #        - 192.168.0.103:27001
 #        - 192.168.0.103:27002
 #        - 192.168.0.103:27003
+#    cluster: #cluster模式
+#      nodes:
+#        - 192.168.0.103:7001
+#        - 192.168.0.103:7002
+#        - 192.168.0.103:7003
+#        - 192.168.0.103:8001
+#        - 192.168.0.103:8002
+#        - 192.168.0.103:8003
   jackson:
     default-property-inclusion: NON_NULL # JSON处理时忽略非空字段
 mybatis-plus:
