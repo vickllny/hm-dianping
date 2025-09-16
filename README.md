@@ -46,9 +46,9 @@
 #### 6.4 `rehash`下的收缩：1、计算哈希表是否`used*100/size` <= 0.1，如果为 true，则将`rehashidx`的值设置为`0`，标识开始 rehash，计算`used+1`的最小 2 的 n 次方数作为第二个`dictht`的初始数组大小，接下来的步骤同扩容时一致
 
 ### 7. ZipList
-#### 7.1 tlbytes 4字节，标识当前 zipList 的总长度
-#### 7.2 tltail 4字节，表示最后一个`entry` 的偏移量
-#### 7.3 tllen 2字节，表示`entry`的个数
+#### 7.1 zlbytes 4字节，标识当前 zipList 的总长度
+#### 7.2 zltail 4字节，表示最后一个`entry` 的偏移量
+#### 7.3 zllen 2字节，表示`entry`的个数
 #### 7.4 entry 存放`ZipListEntry`
 ##### 7.4.1 previous_entry_length 2字节，前一个节点的长度，第一个节点该值为`0`
 ##### 7.4.2 encoding 编码规则，字符串类型的长度可选值有 1、2、5，整数固定为 1
@@ -61,14 +61,15 @@ ab:字符长度为 2 ，使用标识符`00`表示
 | previous_entry_length | encoding | entry |
 | ----                  | ----    | ----    |
 | 00000000              |00000010 => 0x02 | a => 01100001 => 0x61, b => 01100010 => 0x62 |
+
 整个ZipList结构如下
-| tlbytes | tltail  | tllen  | entry               |entry |
+| zlbytes | zltail  | zllen  | entry               |entry |
 | ----    | ----    | ----   | ----                |----  |
 |00001111 | 00001100|00000001|      ab和0xff        |----  |
 |0x0f     | 0x0a    | 0x01   | 0x00_0x02_0x61_0x62 | 0xff |
 
 bc:字符串长度为 2，在放入 ab 后增加entry，entry长度为 4
-|tlbytes  | tltail  | tllen  | entry               | entry               |entry |
+|zlbytes  | zltail  | zllen  | entry               | entry               |entry |
 | ----    | ----    | ----   | ----                | ----                |----  |
 |00010011 | 00001110|00000010|                     |                     |结束符 |
 |0x13     | 0x0e    | 0x02   | 0x00_0x02_0x61_0x62 | 0x04_0x02_0x62_0x63 | 0xff |
