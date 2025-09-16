@@ -42,14 +42,14 @@
 ### 6. DICT
 #### 6.1 `dict`是 redis 的字典结构实现，内部包含 2 个`dictht`哈希表，正常情况下是使用的第一个，在渐进式`rehash`时同时使用，新增时使用第二个`dichht`，查询、删除、更新时 2 个同时使用
 #### 6.2 `dictEntry`是链表结构，用于存放每个一`kv`数据，当发生 hash 冲突时，会将新的 kv 放在链表头部
-#### 6.3 `rehash`下的扩容：1、计算哈希表是否`used/size`>=1 && (`!(BGSAVE || BGREWRITEAOF)` || `used/size >=5`)，如果未 true，则将`rehashidx`的值设置为`0`，标识开始 rehash，计算`used+1`的最小 2 的 n 次方数作为第二个`dictht`的初始数组大小，rehash 不是一次就完成，是每次增删改查时去处理第一个`dictht`中的`rehashidx`元素的节点，直到处理完成每个`dictEntry`，释放第一个`dictht`的内存，再将第二个`dictht`的引用赋值给第一个`dictht`，将`rehashidx`设置为`-1`
-#### 6.4 `rehash`下的收缩：1、计算哈希表是否`used*100/size` <= 0.1，如果未 true，则将`rehashidx`的值设置为`0`，标识开始 rehash，计算`used+1`的最小 2 的 n 次方数作为第二个`dictht`的初始数组大小，接下来的步骤同扩容时一致
+#### 6.3 `rehash`下的扩容：1、计算哈希表是否`used/size`>=1 && (`!(BGSAVE || BGREWRITEAOF)` || `used/size >=5`)，如果为 true，则将`rehashidx`的值设置为`0`，标识开始 rehash，计算`used+1`的最小 2 的 n 次方数作为第二个`dictht`的初始数组大小，rehash 不是一次就完成，是每次增删改查时去处理第一个`dictht`中的`rehashidx`元素的节点，直到处理完成每个`dictEntry`，释放第一个`dictht`的内存，再将第二个`dictht`的引用赋值给第一个`dictht`，将`rehashidx`设置为`-1`
+#### 6.4 `rehash`下的收缩：1、计算哈希表是否`used*100/size` <= 0.1，如果为 true，则将`rehashidx`的值设置为`0`，标识开始 rehash，计算`used+1`的最小 2 的 n 次方数作为第二个`dictht`的初始数组大小，接下来的步骤同扩容时一致
 
 ### 7. ZipList
 #### 7.1 tlbytes 4字节，标识当前 zipList 的总长度
 #### 7.2 tltail 4字节，表示最后一个`entry` 的偏移量
 #### 7.3 tllen 2字节，表示`entry`的个数
-#### 7.4 content 存放`ZipListEntry`
+#### 7.4 entry 存放`ZipListEntry`
 ##### 7.4.1 previous_entry_length 2字节，前一个节点的长度，第一个节点该值为`0`
 ##### 7.4.2 encoding 编码规则，字符串类型的长度可选值有 1、2、5，整数固定为 1
 ###### 7.4.2.1 字符串 00,01,10
@@ -58,18 +58,20 @@
 ###### 7.4.2.1.3 标识符：`|01pppppp|qqqqqqqq|rrrrrrrr|uuuuuuuu|vvvvvvvv|`5字节，高 2 位固定为`10`，剩余 38 位表示 `content`长度，最大值为 1 << 38 -1
 ###### 7.4.2.1.4 示例：插入字符`ab`和`bc`
 ab:字符长度为 2 ，使用标识符`00`表示
-| previous_entry_length | encoding | content |
+| previous_entry_length | encoding | entry |
 | ----                  | ----    | ----    |
 | 00000000              |00000010 => 0x02 | a => 01100001 => 0x61, b => 01100010 => 0x62 |
-
-tlbytes | tltail  | tllen  | content | 0xff
-00001111| 00001100|00000001|
-0x0f    | 0x0a    | 0x01   | 0x00 | 0x02 | 0x61 | 0x62 | 0xff
+整个ZipList结构如下
+| tlbytes | tltail  | tllen  | entry               |entry |
+| ----    | ----    | ----   | ----                |----  |
+|00001111 | 00001100|00000001|      ab和0xff        |----  |
+|0x0f     | 0x0a    | 0x01   | 0x00_0x02_0x61_0x62 | 0xff |
 
 bc:字符串长度为 2，在放入 ab 后增加entry，entry长度为 4
-tlbytes | tltail  | tllen  | content | 0xff
-00010011| 00001110|00000010|
-0x13    | 0x0e    | 0x02   | 0x00 | 0x02 | 0x61 | 0x62 | 0x04 | 0x02 | 0x62 | 0x63 | 0xff
+|tlbytes  | tltail  | tllen  | entry               | entry               |entry |
+| ----    | ----    | ----   | ----                | ----                |----  |
+|00010011 | 00001110|00000010|                     |                     |结束符 |
+|0x13     | 0x0e    | 0x02   | 0x00_0x02_0x61_0x62 | 0x04_0x02_0x62_0x63 | 0xff |
 
 
 ###### 7.4.2.2 整数
