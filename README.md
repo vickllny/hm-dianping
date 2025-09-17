@@ -99,29 +99,59 @@ bc:字符串长度为 2，在放入 ab 后增加entry，entry长度为 4
 #### 8.7.1 int count 当前节点的ZipList的 entry 个数
 
 
-### 9. SkipList header tail length level
-#### 9.1 zskiplistNode *header
-#### 9.2 zskiplistNode *tail
-#### 9.3 length
-#### 9.4 level
+### 9. SkipList
+#### 9.1 zskiplistNode *header 头部节点指针
+#### 9.2 zskiplistNode *tail 尾部节点指针
+#### 9.3 length 跳表的长度
+#### 9.4 level 层级
 #### 9.5 zskiplistNode
-##### 9.5.1 zskiplistNode *backward
+##### 9.5.1 zskiplistNode *backward 前置节点指针
 ##### 9.5.2 zskiplistLevel level[]
-###### 9.5.2.1 zskiplistNode *forward
-###### 9.5.2.2 long span
+###### 9.5.2.1 zskiplistNode *forward 后置节点指针
+###### 9.5.2.2 long span 后置节点指针的跨度
 
 ### 10. RedisObject
-``struct redisObject {
-    unsigned type:4;
-    unsigned encoding:4;
-    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or * LFU data (least significant 8 bits frequency * and most significant 16 bits access time). */
-    unsigned iskvobj : 1;   /* 1 if this struct serves as a kvobj base */
-    unsigned expirable : 1; /* 1 if this key has expiration time attached.* If set, then this object is of type kvobj */
-    unsigned refcount : OBJ_REFCOUNT_BITS;
-    void *ptr;
-};``
-### 11. String 的三种编码模式 OBJECT_ENCODING_(RAW、EMBSTR、INT)
-### 12. List 的三种编码模式 OBJ_ENCODING_LINKEDLIST 、OBJ_ENCODING_ZIPLIST、OBJ_ENCODING_QUICKLIST
-### 13. Set OBJ_ENCODING_HT、OBJ_ENCODING_INTSET 添加元素时可从OBJ_ENCODING_INTSET 转换为 OBJ_ENCODING_HT
-### 14. ZSet OBJ_ENCODING_SKIPLIST、OBJ_ENCODING_HT、OBJ_ENCODING_ZIPLIST 问题1：使用 ht 和 skiplist 时覆盖插入如何保证插入时的性能  问题2：在使用ziplist时是如何存储的，因为ziplist是存储的一个一个元素，而zset是kv形式  
-### 15. HASH OBJ_ENCODING_HT、OBJ_ENCODING_ZIPLIST  ziplist转换为ht的原理
+#### 10.1 type 数据类型,占4bit，可选值如下
+```
+OBJ_STRING 0    /* String object. */
+OBJ_LIST 1      /* List object. */
+OBJ_SET 2       /* Set object. */
+OBJ_ZSET 3      /* Sorted set object. */
+OBJ_HASH 4      /* Hash object. */
+```
+#### 10.2 encoding 编码类型，站4bit，不同数据类型不同数据大小下的编码类型均不一致，可选值如下
+```
+OBJ_ENCODING_RAW 0     /* Raw representation */
+OBJ_ENCODING_INT 1     /* Encoded as integer */
+OBJ_ENCODING_HT 2      /* Encoded as hash table */
+OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */
+OBJ_ENCODING_LINKEDLIST 4 /* No longer used: old list encoding. */
+OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */
+OBJ_ENCODING_INTSET 6  /* Encoded as intset */
+OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
+OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
+OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */
+OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
+```
+#### 10.3 lru //TODO
+### 11. String
+#### 11.1 OBJ_ENCODING_RAW
+#### 11.2 OBJ_ENCODING_EMBSTR
+#### 11.3 OBJ_ENCODING_INT
+
+### 12. List
+#### 12.1 OBJ_ENCODING_LINKEDLIST
+#### 12.2 OBJ_ENCODING_ZIPLIST
+#### 12.3 OBJ_ENCODING_QUICKLIST
+
+### 13. Set
+#### 13.1 OBJ_ENCODING_HT
+#### 13.1 OBJ_ENCODING_INTSET   添加元素时可从OBJ_ENCODING_INTSET 转换为 OBJ_ENCODING_HT
+
+### 14. ZSet 问题1：使用 ht 和 skiplist 时覆盖插入如何保证插入时的性能  问题2：在使用ziplist时是如何存储的，因为ziplist是存储的一个一个元素，而zset是kv形式  
+#### 14.1 OBJ_ENCODING_SKIPLIST 和 OBJ_ENCODING_HT
+#### 14.2 OBJ_ENCODING_ZIPLIST
+
+### 15. HASH
+#### 15.1 OBJ_ENCODING_HT
+#### 15.2 OBJ_ENCODING_ZIPLIST ziplist转换为ht的原理
