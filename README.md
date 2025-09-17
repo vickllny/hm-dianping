@@ -50,7 +50,7 @@
 #### 7.2 tltail 4字节，表示最后一个`entry` 的偏移量
 #### 7.3 tllen 2字节，表示`entry`的个数
 #### 7.4 content 存放`ZipListEntry`
-##### 7.4.1 previous_entry_length 2字节，前一个节点的长度，第一个节点该值为`0`
+##### 7.4.1 previous_entry_length 1 字节或者 5 字节，前一个节点的长度，第一个节点该值为`0`
 ##### 7.4.2 encoding 编码规则，字符串类型的长度可选值有 1、2、5，整数固定为 1
 ###### 7.4.2.1 字符串 00,01,10
 ###### 7.4.2.1.1 标识符：`|00pppppp|`1字节，高 2 位固定为`00`，剩余 6 位表示 `content`长度，最大值为 63
@@ -80,3 +80,45 @@ tlbytes | tltail  | tllen  | content | 0xff
 ###### 7.4.2.2.5 encoding-> 11111110 8位有符号整数(1字节)
 ###### 7.4.2.2.6 encoding-> 1111xxxx xxxx范围0001~1101,也就是 0～12范围内的数字不使用 content 记录，直接保存在`encoding`中的低4位
 #### 7.5 0xff 固定结束标识
+
+### 8. quicklist
+#### 8.1 quicklistNode *head
+#### 8.2 quicklistNode *tail
+#### 8.3 long count 所有 zipList 的 entry 的个数
+#### 8.4 long len zipList 的个数
+#### 8.5 int fill ziplist中每个 entry 的限制，当为正数时是个数限制，当为负数时是大小限制 -1=>4kb, -2=>8kb, -3=>16kb
+#### 8.6 int compress 首尾不压缩节点的数量
+#### 8.7 quicklistNode
+#### 8.7.1 quicklistNode *prev
+#### 8.7.1 quicklistNode *next
+#### 8.7.1 unsigned char *zl 当前节点的 ZipList 指针
+#### 8.7.1 int sz 当前节点的ZipList大小
+#### 8.7.1 int count 当前节点的ZipList的 entry 个数
+
+
+### 9. SkipList header tail length level
+#### 9.1 zskiplistNode *header
+#### 9.2 zskiplistNode *tail
+#### 9.3 length
+#### 9.4 level
+#### 9.5 zskiplistNode
+##### 9.5.1 zskiplistNode *backward
+##### 9.5.2 zskiplistLevel level[]
+###### 9.5.2.1 zskiplistNode *forward
+###### 9.5.2.2 long span
+
+### 10. RedisObject
+``struct redisObject {
+    unsigned type:4;
+    unsigned encoding:4;
+    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or * LFU data (least significant 8 bits frequency * and most significant 16 bits access time). */
+    unsigned iskvobj : 1;   /* 1 if this struct serves as a kvobj base */
+    unsigned expirable : 1; /* 1 if this key has expiration time attached.* If set, then this object is of type kvobj */
+    unsigned refcount : OBJ_REFCOUNT_BITS;
+    void *ptr;
+};``
+### 11. String 的三种编码模式 OBJECT_ENCODING_(RAW、EMBSTR、INT)
+### 12. List 的三种编码模式 OBJ_ENCODING_LINKEDLIST 、OBJ_ENCODING_ZIPLIST、OBJ_ENCODING_QUICKLIST
+### 13. Set OBJ_ENCODING_HT、OBJ_ENCODING_INTSET 添加元素时可从OBJ_ENCODING_INTSET 转换为 OBJ_ENCODING_HT
+### 14. ZSet OBJ_ENCODING_SKIPLIST、OBJ_ENCODING_HT、OBJ_ENCODING_ZIPLIST 问题1：使用 ht 和 skiplist 时覆盖插入如何保证插入时的性能  问题2：在使用ziplist时是如何存储的，因为ziplist是存储的一个一个元素，而zset是kv形式  
+### 15. HASH OBJ_ENCODING_HT、OBJ_ENCODING_ZIPLIST  ziplist转换为ht的原理
