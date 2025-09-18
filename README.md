@@ -155,3 +155,14 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 ### 15. HASH
 #### 15.1 OBJ_ENCODING_HT
 #### 15.2 OBJ_ENCODING_ZIPLIST ziplist转换为ht的原理
+
+### 16. CAP 理论
+#### 16.1 Consistency(一致性)：用户访问分布式系统中的任意节点，得到的数据必须一致
+#### 16.2 Availability(可用性)：用户访问集群中的任意健康节点，必须能得到响应，而不是超时或拒绝
+#### 16.3 Partition tolerance(分区容错)：因为网络故障或其他原因导致分布式系统中的部分节点与其它节点失去连接，形成独立分区，当出现分区时，整个系统也要持续对外提供服务
+#### 16.4 问题：分布式系统节点通过网络连接，一定会出现分区问题（P），当分区出现时，系统一致性和可用性无法同时满足，就只能选择AP或者CP
+
+### 17. BASE 理论
+#### 17.1 Basic Available 基本可用：分布式系统出现故障时，允许损失部分可用性，保证核心可用
+#### 17.2 Soft State 软状态：在一定时间内，允许出现中间状态，比如临时的不一致
+#### 17.3 Eventually Consistent 最终一致性：虽然无法达到强一致性，但是在软状态结束后，最终达到数据一致
