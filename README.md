@@ -241,6 +241,17 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 * 消息投递到交换机了，但是没有路由到队列。返回ACK，及路由失败原因
 
 #### 19.2 消息持久化
+##### 19.2.1 交换机持久化
+* 创建交换机时将`durable`参数设置true，即可让交换机持久化
+##### 19.2.2 队列持久化
+* 创建队列时可使用`QueueBuilder.durable(${queueName}).build()`让队列持久化
+##### 19.2.3 消息持久化
+* 可以指定`MessageProperties`中的`DeliveryMode`来指定
+* ```
+MessageBuilder.withBody(message.getBytes(StandardCharsets.UTF_8))
+	.setDeliveryMode(MessageDeliveryMode.PRESISTENT) //持久化
+	.build();
+```
 
 
 
