@@ -269,3 +269,10 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 * RejectAndDontRequeueRecoverer：重试耗尽后，直接reject，丢弃消息。默认就是这种方式
 * ImmediateRequeueRecoverer：重试耗尽后，返回nack，消息重新入队
 * RepublishRequeueRecoverer：重试耗尽后，将失败消息投递到指定的交换机
+* 
+#### 19.4 死信交换机
+##### 19.4.1 成为死信消息许满足以下情况之一
+* 消费者使用`basic.reject`或者`basic.nack`声明消费失败，并且消息的requeue属性设置为`false`
+* 消息是一个过期消息，超时也没有被消费
+* 要投递的队列消息堆积满了，最早的消息可能成为死信
+#### 19.4.2 死信投递：当该队列配置了`dead-letter-exchange`属性指定了一个交换机，那么队列中的死信消息就会投递到这个交换机中，而这个交换机成为死信交换机(Dead Letter Exchange,简称DLX)
