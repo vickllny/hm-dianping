@@ -247,27 +247,25 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 * 创建队列时可使用`QueueBuilder.durable(${queueName}).build()`让队列持久化
 ##### 19.2.3 消息持久化
 * 可以指定`MessageProperties`中的`DeliveryMode`来指定
-* ```
-MessageBuilder.withBody(message.getBytes(StandardCharsets.UTF_8))
-	.setDeliveryMode(MessageDeliveryMode.PRESISTENT) //持久化
-	.build();
-```
+* ``` 
+  MessageBuilder.withBody(message.getBytes(StandardCharsets.UTF_8))
+      .setDeliveryMode(MessageDeliveryMode.PRESISTENT) //持久化
+      .build();
+  ```
 
+#### 19.3 消费者消息确认：消费者消息处理完成后向MQ发送ack回执，MQ收到ack后才会删除该消息
+##### 19.3.1 `manual`：手动`ack`，需要再业务代码结束后，调用api发送`ack`
+##### 19.3.2 `auto`：自动`ack`，由`spring`检测`listener`代码是否出现异常，没有异常则返回`ack`；抛出异常则返回`nack`
+##### 19.3.3 `none`：关闭`ack`，MQ假定消费者获取消息后会处理成功，因此消息投递后立即被删除
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#### 19.4 失败重试机制
+##### 19.4.1 可以利用`spring`的`retry`机制，在消费者出现异常时利用本地重试，而不是无限制的`requeue`到MQ队列，配置如下 
+* spring.rabbitmq.listener.simple.retry.enabled=true //启用消费者失败重试
+* spring.rabbitmq.listener.simple.retry.initial-interval=1000 //初始的失败等待时长为1秒
+* spring.rabbitmq.listener.simple.retry.multiplier=1 //下次失败的等待时长倍数，下次等待时长 = multiplier * initial-interval
+* spring.rabbitmq.listener.simple.retry.max-attempts=1 //最大重试次数
+* spring.rabbitmq.listener.simple.retry.stateless=true //true无状态，false有状态。如果业务中包含事务，这里改为false
+##### 19.4.2 消费者消费消息失败，并且重试也失败，则需要MessageRecoverer接口来处理，包含三种不同的实现
+* RejectAndDontRequeueRecoverer：重试耗尽后，直接reject，丢弃消息。默认就是这种方式
+* ImmediateRequeueRecoverer：重试耗尽后，返回nack，消息重新入队
+* RepublishRequeueRecoverer：重试耗尽后，将失败消息投递到指定的交换机
