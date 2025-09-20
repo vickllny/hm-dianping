@@ -281,3 +281,20 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 ##### 19.4.3 TTL(Time-To-Live)，如果队列中的消息TTL结束仍未被消费，则会变成死信，TTL超时分为两种情况
 * 消息所在的队列(`x-message-ttl`)设置了存活时间
 * 消息本身设置了存活时间
+* 注：当消息和队列都设置了`TTL`时间时，消息的超时时间优先级高于队列
+##### 19.4.4 延迟队列插件(`DelayExchange`)，使用步骤如下
+* 创建交换机时设置属性`delayed`为true
+* 发送消息时，设置头信息`x-delay`的超时时间即可
+#### 19.5 消息堆积：生产者发送消息的速度大于消费者消费消息的速度，就会导致队列中的消息产生堆积，直到队列存储消息达到上限。最早收到的消息可能会成为私死信，会被丢弃，这就是消息堆积问题
+##### 19.5.1 三种解决方式
+* 增加更多消费者，提高消费速度
+* 使用线程池提高消费速度
+* 扩大队列容积，提高堆积上限
+#### 19.6 惰性队列(`Lazy Queues`)，特点如下
+* 队列接收到消息后将消息存储在磁盘，而不是内存
+* 消费者消费消息时从磁盘上读取消息并加载到内存中
+* 可以存储数百万条消息 
+##### 19.6.1 使用方式
+* rabbitmq命令方式：```rabbitmqctl set_policy Lazy "^lazy-queue$" '{"queue-mode": "lazy"}' --apply-to queues``` 
+* @Bean方式：在AMQP中声明队列的时候，设置`lazy`属性为`true`
+* @RabbitListener方式：在@Queue中设置`arguments`添加`x-queue-mode`属性，设置值为`true` 
