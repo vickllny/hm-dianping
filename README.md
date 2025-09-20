@@ -303,4 +303,7 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 #### 20.1 Nacos的服务注册表结构是怎样的？
 Nacos采用了分级注册表结构，最外层是Namespace，用于隔离环境；然后是Group，用于将服务进行分组；然后是服务Service，一个Service可能包含多个实例，而多个实例可能出于不同机房，因此Service下是多个Cluster，最后Cluster下是多个服务实例
 #### 20.2 Nacos如何支撑数十万注册压力？
+* nacos可以做成集群，从而提高注册性能
+* nacos在更新本地注册表时，并不是同步的执行更新，而是将任务丢进阻塞队列，有另外一个线程异步更新本地注册表
+* nacos在更新集群的其它节点注册表时，使用了延迟任务，也是异步更新
 
