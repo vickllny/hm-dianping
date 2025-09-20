@@ -298,3 +298,9 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 * rabbitmq命令方式：```rabbitmqctl set_policy Lazy "^lazy-queue$" '{"queue-mode": "lazy"}' --apply-to queues``` 
 * @Bean方式：在AMQP中声明队列的时候，设置`lazy`属性为`true`
 * @RabbitListener方式：在@Queue中设置`arguments`添加`x-queue-mode`属性，设置值为`true` 
+
+### 20. Nacos
+#### 20.1 Nacos的服务注册表结构是怎样的？
+Nacos采用了分级注册表结构，最外层是Namespace，用于隔离环境；然后是Group，用于将服务进行分组；然后是服务Service，一个Service可能包含多个实例，而多个实例可能出于不同机房，因此Service下是多个Cluster，最后Cluster下是多个服务实例
+#### 20.2 Nacos如何支撑数十万注册压力？
+
