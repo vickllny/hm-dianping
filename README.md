@@ -304,3 +304,17 @@ OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
 Nacos采用了分级注册表结构，最外层是Namespace，用于隔离环境；然后是Group，用于将服务进行分组；然后是服务Service，一个Service可能包含多个实例，而多个实例可能出于不同机房，因此Service下是多个Cluster，最后Cluster下是多个服务实例
 #### 20.2 Nacos如何支撑数十万注册压力？
 
+
+### 21.synchronized
+#### 21.1 WaitSet: 使用`synchronized`关键字对临界资源的读写，当获取锁之后在同步代码块中执行`wait`方法则将当前线程添加到`WaitSet`的集合中，等待其他线程调用`notify`或者`notifyAll`唤醒`WaitSet`中的线程
+#### 21.2 EntryList: 当前线程未获取到锁时会进入阻塞状态，进入到` `集合中，当锁资源被释放时，当前线程被环境重新去争抢锁，如果失败还是会存在`EntryList`中继续等待
+
+### 22.AQS(AbstractQueuedSynchronizer)
+#### 22.1 int state: `ReentrantLock`、`ReentrantReadWriteLock`获取锁的实现都是修改`state`的值实现的 `0->未被其他线程获取`，`1-已被其他线程获取`
+#### 22.2 Node对象组成的双向链表: 未获取到锁的对象进入此链表，进行等待 
+#### 22.3 Node对象组成的单向链表: 比如`ReentrantLock`，一个线程持有锁时，并执行的`await`方法，这个线程就会被封装为`Node`对象，放入单向链表
+#### 22.4 为什么一个单向一个双向。
+* 双向：进入等待链表中的线程是可以主动或者超时取消等待的，意味着需要从链表当中移除该Node对象，即需要把前置节点的next指针指向后置节点 `current.prev.next = current.next`，后置节点的prev也需要指向前置节点 `current.next.prev = current.prev`，如果是单向链表，则无法直接获取前置节点
+* 单向：调用`await`方法的线程是不会主动被移除掉的，需要等待`sign`、`signAll`或`interrupt`方法唤醒，然后进入到同步队列中处理中断或者取消逻辑
+#### 22.5 Lock锁和AQS的关系
+
